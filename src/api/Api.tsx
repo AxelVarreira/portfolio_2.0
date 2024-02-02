@@ -5,15 +5,16 @@ const client = axios.create({
   baseURL: "https://api.github.com",
 });
 
-client.interceptors.request.use(async (config) => {
-  const token = process.env.REACT_APP_TOKEN;
+// FIXME: Entender porque isso quebrou as chamadas
+// client.interceptors.request.use(async (config) => {
+//   const token = process.env.REACT_APP_TOKEN;
 
-  if (token) {
-    client.defaults.data.access_token = `Bearer ${token}`;
-  }
+//   if (token) {
+//     client.defaults.data.access_token = `Bearer ${token}`;
+//   }
 
-  return config;
-});
+//   return config;
+// });
 
 const responseBody = (response: AxiosResponse) => response.data;
 

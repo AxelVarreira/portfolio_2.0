@@ -1,57 +1,67 @@
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import SectionType from "../../enum/SectionType";
 import { RepositoryItem } from "../../models/repo.interface";
 import { Repos } from "../../api/Api"; //add
 import RepoItemComponent from "../repo_item/RepoItemComponent";
+import FormComponent from "../form/FormComponent";
 
-interface Props {
-  identificador?: SectionType;
-}
+// interface Props {
+//   identificador?: SectionType;
+// }
 
 // TODO: Criar useContext desse component para fazer a "home" mandar o identificador como numero 4 e ativar o default
-const SectionComponent: React.FC<Props> = ({ identificador }) => {
-  const [texto, setTexto] = useState(process.env.REACT_APP_SOBRE);
+const SectionComponent: React.FC = (/*{ identificador }*/) => {
   const [sectionType, setSectionType] = useState(SectionType.ABOUT);
   const [repos, setRepos] = useState<RepositoryItem[]>([]);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    Repos.getRepos().then((data) => {
-      setRepos(data);
-    });
+    Repos.getRepos()
+      .then((repositoryItem: RepositoryItem[]) => {
+        setRepos(repositoryItem);
+        setError(false);
+      })
+      .catch(function (error) {
+        setError(true);
+
+        console.log("Error", error.message);
+      });
     return () => {};
   }, []);
 
-  useEffect(() => {
-    return () => {};
-  }, [sectionType]);
-
   // TODO: Desaclopar chamada da API e controle de estado do componente e adicionar uma controller futuramente
-  function trocaTexto(identificador: SectionType) {
-    switch (identificador) {
+  function renderComponents() {
+    switch (sectionType) {
       case SectionType.ABOUT:
-        setSectionType(SectionType.ABOUT);
-        setTexto(process.env.REACT_APP_SOBRE ?? "");
-        break;
+        return process.env.REACT_APP_SOBRE;
       case SectionType.PROJECTS:
-        // TODO: Adicionar chamada a API do Github para pegar projetos]
-        setSectionType(SectionType.PROJECTS);
-        break;
+        return error ? (
+          <h1>Error!</h1>
+        ) : (
+          repos.map((repo) => {
+            return (
+              <RepoItemComponent
+                description={repo.description}
+                title={repo.full_name}
+                url={repo.html_url}
+              />
+            );
+          })
+        );
+
       case SectionType.CONTACT:
-        setSectionType(SectionType.CONTACT);
-        // TODO: Adicionar integracao com e-mail e whatsapp
-        setTexto(process.env.REACT_APP_CONTATO ?? "");
-        break;
+        return <FormComponent />;
       default:
-        setTexto("Ops, como tu conseguiu isso homi?");
+        return "Ops, como tu conseguiu isso homi?";
     }
   }
 
   return (
     <div>
-      <ul className="flex flex-row justify-between my-12">
+      <ul className="flex flex-row justify-evenly my-12">
         <li>
           <button
-            onClick={() => trocaTexto(SectionType.ABOUT)}
+            onClick={() => setSectionType(SectionType.ABOUT)}
             className="cursor-pointer hover:bg-black hover:text-white"
           >
             Sobre mim
@@ -59,7 +69,7 @@ const SectionComponent: React.FC<Props> = ({ identificador }) => {
         </li>
         <li>
           <button
-            onClick={() => trocaTexto(SectionType.PROJECTS)}
+            onClick={() => setSectionType(SectionType.PROJECTS)}
             className="cursor-pointer hover:bg-black hover:text-white"
           >
             Projetos
@@ -67,27 +77,14 @@ const SectionComponent: React.FC<Props> = ({ identificador }) => {
         </li>
         <li>
           <button
-            onClick={() => trocaTexto(SectionType.CONTACT)}
+            onClick={() => setSectionType(SectionType.CONTACT)}
             className="cursor-pointer hover:bg-black hover:text-white"
           >
             Contato
           </button>
         </li>
       </ul>
-
-      <p>
-        {sectionType !== SectionType.PROJECTS
-          ? texto
-          : repos.map((repo) => {
-              return (
-                <RepoItemComponent
-                  description={repo.description}
-                  title={repo.full_name}
-                  url={repo.html_url}
-                />
-              );
-            })}
-      </p>
+      {renderComponents()}
     </div>
   );
 };
